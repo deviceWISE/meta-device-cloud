@@ -1,0 +1,18 @@
+SUMMARY = "An implementation of the WebSocket Protocol (RFC 6455)"
+# TODO: fix this location
+HOMEPAGE = "https://pypi.python.org/pypi/websocket-client"
+LICENSE = "LGPL"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=18b09a20dd186af4fd60f1a08311628c"
+S = "websocket_client-${PV}"
+SRCNAME = "websocket_client"
+inherit pypi setuptools3
+SRC_URI = "https://files.pythonhosted.org/packages/source/s/${SRCNAME}/${SRCNAME}-${PV}.tar.gz"
+SRC_URI[md5sum] = "73d87aa16a2212da448b30aca9c5bf3b"
+SRC_URI[sha256sum] = "15f585566e2ea7459136a632b9785aa081093064391878a448c382415e948d72"
+DEPENDS += " \
+    python-pbr-native"
+#RDEPENDS_${PN} = "\
+#        ${PYTHON_PN}-asyncio \
+#        ${PYTHON_PN}-multiprocessing \
+#"
+
