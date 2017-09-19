@@ -4,7 +4,8 @@ LICENSE = "Apache-2.0"
 SECTION = "devel/python"
 LIC_FILES_CHKSUM = "file://COPYING.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRCREV = "6fb8e02db1cbd6a18aa49ce9577d8e098f6f6027"
+SRCREV = "a06b99f1b64a0e510600405657ccd55cbfeada84"
+
 # for now, prepopulate this in the downloads directory
 SRC_URI = "git://github.com/Wind-River/hdc-python.git"
 
@@ -13,13 +14,16 @@ S = "${WORKDIR}/git"
 RDEPENDS_${PN}_class-native = ""
 DEPENDS_append_class-native = " python-native "
 
+RDEPENDS_${PN} += "${PN}-systemd bash sudo"
+RDEPENDS_${PN}-systemd += "bash"
+
 ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
 SHARE_DIR = "/usr/share"
 
 # Note: support python3 by default
-inherit setuptools3
+inherit setuptools3 systemd
 
 BBCLASSEXTEND = "native"
 
@@ -44,6 +48,10 @@ RDEPENDS_${PN} += "\
 "
 # TODO: fix the websockets vs websocket module name issue!
 
+PACKAGES =+ "${PN}-systemd"
+SYSTEMD_SERVICE_${PN}-systemd += "device-manager.service"
+SYSTEMD_PACKAGES = "${PN}-systemd"
+
 # hdc-python must be able to coexsit with previous HDC versions.  So, install
 # into its own namespace.
 do_install_append() {
@@ -52,6 +60,13 @@ do_install_append() {
 	install -d ${D}/${ETC_DIR}
 	install -d ${D}/${VAR_DIR}
 	install -d ${D}/${BIN_DIR}
+	install -d ${D}${systemd_unitdir}/system/
+	#install -d ${D}/${sysconfdir}/sudoers.d
+
+	echo "Installing: ${B}/share/device-manager.service into ${D}${systemd_unitdir}/system "
+	install -m 0644 "${B}/share/device-manager.service" ${D}${systemd_unitdir}/system/
+
+	#install -m 0400 "${WORKDIR}/hdc.sudoers" "${D}/${sysconfdir}/sudoers.d/hdc"
 
 	install -m 644 "${B}/COPYING.txt" ${D}/${SHARE_DIR}
     	cp -r ${B}/demo  ${D}/${SHARE_DIR}
@@ -86,4 +101,5 @@ do_install_append() {
 
 }
 FILES_${PN} += "${SHARE_DIR} ${VAR_DIR} ${ETC_DIR} ${BIN_DIR}"
+FILES_${PN}-systemd += "${systemd_unitdir}"
 
