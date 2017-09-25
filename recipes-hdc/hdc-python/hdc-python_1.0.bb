@@ -11,9 +11,6 @@ SRC_URI = "git://github.com/Wind-River/hdc-python.git"
 
 S = "${WORKDIR}/git"
 
-RDEPENDS_${PN}_class-native = ""
-DEPENDS_append_class-native = " python-native "
-
 RDEPENDS_${PN} += "${PN}-systemd bash sudo"
 RDEPENDS_${PN}-systemd += "bash"
 
@@ -24,8 +21,6 @@ SHARE_DIR = "/usr/share"
 
 # Note: support python3 by default
 inherit setuptools3 systemd
-
-BBCLASSEXTEND = "native"
 
 RDEPENDS_${PN} += "\
     bash \
