@@ -1,2 +1,2 @@
 # meta-hdc
-HDC Yocto layer 
+Wind River® Helix™ Device Cloud Yocto layer 
