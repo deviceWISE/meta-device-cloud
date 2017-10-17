@@ -4,13 +4,12 @@ LICENSE = "Apache-2.0"
 SECTION = "devel/python"
 LIC_FILES_CHKSUM = "file://COPYING.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRCREV = "a06b99f1b64a0e510600405657ccd55cbfeada84"
+SRCREV = "d9b3818ccec5a7571e13dc8d7c555d69cb927cb1"
 
 # for now, prepopulate this in the downloads directory
 SRC_URI = "git://github.com/Wind-River/hdc-python.git"
 
 S = "${WORKDIR}/git"
-
 RDEPENDS_${PN} += "${PN}-systemd bash sudo"
 RDEPENDS_${PN}-systemd += "bash"
 
@@ -19,8 +18,8 @@ VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
 SHARE_DIR = "/usr/share"
 
-# Note: support python3 by default
-inherit setuptools3 systemd
+# Note: support python2 by default
+inherit setuptools systemd
 
 RDEPENDS_${PN} += "\
     bash \
@@ -28,19 +27,20 @@ RDEPENDS_${PN} += "\
     ${PYTHON_PN}-unixadmin \
     ${PYTHON_PN}-io \
     ${PYTHON_PN}-certifi \
+    ${PYTHON_PN}-pytest-runner \
     ${PYTHON_PN}-paho-mqtt \
-    ${PYTHON_PN}-argparse \
     ${PYTHON_PN}-json \
     ${PYTHON_PN}-logging \
     ${PYTHON_PN}-paho-mqtt \
-    ${PYTHON_PN}-requests \
     ${PYTHON_PN}-pysocks \
     ${PYTHON_PN}-subprocess \
     ${PYTHON_PN}-threading \
     ${PYTHON_PN}-unittest \
     ${PYTHON_PN}-requests \
-    ${PYTHON_PN}-websockets \
+    ${PYTHON_PN}-websocket-client \
 "
+#    ${PYTHON_PN}-requests
+#${PYTHON_PN}-argparse
 # TODO: fix the websockets vs websocket module name issue!
 
 PACKAGES =+ "${PN}-systemd"
@@ -68,7 +68,7 @@ do_install_append() {
     	cp -r ${B}/docker  ${D}/${SHARE_DIR}
     	cp ${B}/README* ${D}/${SHARE_DIR}
     	cp -r ${B}/share/example-ota-package ${D}/${SHARE_DIR}
-    
+   
 	#TODO: update the paths in the device manager for runtime and etc
 
 	# fix python version
