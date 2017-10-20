@@ -5,7 +5,7 @@ Building for Yocto
 
 Requirements
 ------------
-  * meta-hdc layer depends on
+  * meta-device-cloud layer depends on
     * meta-python layer
     * meta-openembedded layer
 
@@ -14,7 +14,7 @@ local.conf addtions
 Add the following to your local.conf:
 
 ```
-CORE_IMAGE_EXTRA_INSTALL += "python-modules hdc-python"
+CORE_IMAGE_EXTRA_INSTALL += "python-modules python-device-cloud"
 
 # use systemd as the default init manager
 # comment the following lines to use 'sysvinit' as the init manager
