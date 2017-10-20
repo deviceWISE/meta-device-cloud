@@ -58,6 +58,7 @@ Build the image
 ---------------
 ```sh
 make python-device-cloud.addpkg
+make python-pip.addpkg
 make fs
 ```
 
