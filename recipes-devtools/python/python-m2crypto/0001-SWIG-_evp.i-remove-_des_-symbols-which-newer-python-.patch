@@ -1,0 +1,55 @@
+From 8006f410b8e590a4f53f5b95924d1eb51666aba8 Mon Sep 17 00:00:00 2001
+From: Paul Barrette <paul.barrette@windriver.com>
+Date: Mon, 23 Oct 2017 15:21:51 -0400
+Subject: [PATCH] SWIG/_evp.i: remove _des_ symbols which newer python doesn't
+ support
+
+DES is insecure.  Newer python e.g. 2.7.9+ does not support it.  Remove
+references to it.  Otherwise, when the python module is loaded, the following
+error will show:
+	m2crypto.so: undefined symbol: EVP_des_cfb
+This is shown when building crda, which loads the m2crypto module.
+
+Signed-off-by: Paul Barrette <paul.barrette@windriver.com>
+---
+ SWIG/_evp.i | 24 ------------------------
+ 1 file changed, 24 deletions(-)
+
+diff --git a/SWIG/_evp.i b/SWIG/_evp.i
+index 87697df..ed3a76f 100644
+--- a/SWIG/_evp.i
++++ b/SWIG/_evp.i
+@@ -49,30 +49,6 @@ extern const EVP_MD *EVP_sha512(void);
+ %rename(digest_init) EVP_DigestInit;
+ extern int EVP_DigestInit(EVP_MD_CTX *, const EVP_MD *);
+ 
+-%rename(des_ecb) EVP_des_ecb;
+-extern const EVP_CIPHER *EVP_des_ecb(void);
+-%rename(des_ede_ecb) EVP_des_ede;
+-extern const EVP_CIPHER *EVP_des_ede(void);
+-%rename(des_ede3_ecb) EVP_des_ede3;
+-extern const EVP_CIPHER *EVP_des_ede3(void);
+-%rename(des_cbc) EVP_des_cbc;
+-extern const EVP_CIPHER *EVP_des_cbc(void);
+-%rename(des_ede_cbc) EVP_des_ede_cbc;
+-extern const EVP_CIPHER *EVP_des_ede_cbc(void);
+-%rename(des_ede3_cbc) EVP_des_ede3_cbc;
+-extern const EVP_CIPHER *EVP_des_ede3_cbc(void);
+-%rename(des_cfb) EVP_des_cfb;
+-extern const EVP_CIPHER *EVP_des_cfb(void);
+-%rename(des_ede_cfb) EVP_des_ede_cfb;
+-extern const EVP_CIPHER *EVP_des_ede_cfb(void);
+-%rename(des_ede3_cfb) EVP_des_ede3_cfb;
+-extern const EVP_CIPHER *EVP_des_ede3_cfb(void);
+-%rename(des_ofb) EVP_des_ofb;
+-extern const EVP_CIPHER *EVP_des_ofb(void);
+-%rename(des_ede_ofb) EVP_des_ede_ofb;
+-extern const EVP_CIPHER *EVP_des_ede_ofb(void);
+-%rename(des_ede3_ofb) EVP_des_ede3_ofb;
+-extern const EVP_CIPHER *EVP_des_ede3_ofb(void);
+ %rename(bf_ecb) EVP_bf_ecb;
+ extern const EVP_CIPHER *EVP_bf_ecb(void);
+ %rename(bf_cbc) EVP_bf_cbc;
+-- 
+1.9.1
+
