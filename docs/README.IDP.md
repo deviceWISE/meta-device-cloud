@@ -34,14 +34,10 @@ git clone /opt/WindRiver/WRL9_Mirror/WRLinux-9-LTS-CVE/meta-openembedded
 
 Fix some problems in bitbake files
 ----------------------------------
-  * crda does not compile wh newer python due to sslv2 obsolete
-  ciphers.  Remove it from the idp package group.
-```sh
-sed -i 's/crda//' wr-idp/wr-idp-base/recipes-base/packagegroups/packagegroup-idp-net.bb
 ```
   * the version of python-dbus in meta-openembedded/meta-python
   conflicts with the version in oe-core.  Remove the
-  meta-openembedded one
+  meta-openembedded one, and use the oe-core version:
 ```sh
 mv ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4.bb ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4_bb
 ```
