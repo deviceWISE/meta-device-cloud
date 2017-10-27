@@ -1,0 +1,320 @@
+#!/bin/sh
+
+echo_red()
+{
+	printf "\033[1;31m"
+	# using stdout to be compatible with non-idp image
+	echo "$@"
+	printf "\033[0m"
+}
+
+echo_green()
+{
+	printf "\033[1;32m"
+	echo "$@"
+	printf "\033[0m"
+}
+
+echo_yellow()
+{
+	printf "\033[1;33m"
+	echo "$@"
+	printf "\033[0m"
+}
+
+check_return_value()
+{
+	if [ ! $1 -eq 0 ]
+	then
+	echo_red "$2 ! Rebooting in 5 seconds..."
+	sleep 5
+	reboot -f
+	fi
+}
+
+mkdir -p /proc
+mkdir -p /sys
+mkdir -p /tmp
+mkdir -p /mnt
+
+mkdir -p /run/lock
+
+mount -t proc proc /proc ||
+	check_return_value $? "[ramfs]: Error when mounting /proc"
+
+mount -t tmpfs tmp /tmp ||
+	check_return_value $? "[ramfs]: Error when mounting /tmp"
+
+mount -t sysfs sysfs /sys ||
+	check_return_value $? "[ramfs]: Error when mounting /sys"
+
+mount -t tmpfs tmpfs /dev  -o size=64k,mode=0755 ||
+	check_return_value $? "[ramfs]: Error when mounting /dev"
+
+mkdir /dev/pts /dev/shm
+echo "/sbin/mdev" > /proc/sys/kernel/hotplug
+mdev -s
+
+echo 10 > /proc/sys/kernel/panic
+
+export PATH="${PATH}:/sbin"
+
+# Parse the boot line and determine which style of root FS device specification was used.
+ UUID=$(cat /proc/cmdline | grep -o '\<root=UUID=[^ ]*'  | cut -d "=" -f 3 | sed 's/"//g')
+LABEL=$(cat /proc/cmdline | grep -o '\<root=LABEL=[^ ]*' | cut -d "=" -f 3 | sed 's/"//g')
+   LV=$(cat /proc/cmdline | grep -o '\<root=LVM=[^ ]*'   | cut -d "=" -f 3 | sed 's/"//g')
+  SFR=$(cat /proc/cmdline | grep -o '\<root=SFR=[^ ]*'   | cut -d "=" -f 3 | sed 's/"//g')
+ RDEV=$(cat /proc/cmdline | grep -o '\<root=[^ ]*'       | cut -d "=" -f 2 | sed 's/"//g')
+
+[ -n "$SFR" ] && LV="$SFR"
+
+ACCESS_MODE="rw"
+cat /proc/cmdline|grep -q -e "\<ro\>" && ACCESS_MODE="ro"
+
+# mdadm is used for RAID devices.  This isn't necessary for LVM, which is a superset of RAID.
+if [ -z "$LV" ]; then
+	echo_green -n "[ramfs]: [Detecting RAID array]: "
+	mdadm --assemble --scan --auto=md
+else
+	echo_green "[ramfs]: We are using LVM.  Skipping mdadm client."
+fi
+
+if [ -z "$UUID" -a -z "$LABEL" -a -z "$LV" -a -z "$RDEV" ]; then
+	echo_red "[ramfs]: empty root= option, cannot proceed! Rebooting in 5 seconds..."
+	sleep 5
+	reboot -f
+fi
+
+try_count=60
+while [ $try_count -gt 0 ]; do
+
+	# Based on the root FS specification used, find the actual block device it refers to.
+	if [ -n "$UUID" ]; then
+		# Find the block device which matches the desired UUID.
+		ROOTDEV=`/sbin/blkid | awk -F: '/UUID="'"$UUID"'"/{print $1}'`
+		[ -n "$ROOTDEV" ] && break
+		ROOTDEV="$UUID"
+	elif [ -n "$LABEL" ]; then
+		# Find the block device which matches the desired label.
+		ROOTDEV=`/sbin/blkid | awk -F: '/LABEL="'"$LABEL"'"/{print $1}'`
+		[ -n "$ROOTDEV" ] && break
+		ROOTDEV="$LABEL"
+	elif [ -n "${LV}" ]; then
+		VG_NAME="$(basename $LV | cut -d "-" -f 1 )"
+		LV_NAME="$(basename $LV | cut -d "-" -f 2 )"
+		ROOTDEV="$LV"
+		VG_OK=1
+		LV_OK=1
+
+		# Find and import the rootFS VG and the desired LV in it.
+		echo_green "[ramfs]: Finding and importing the $VG_NAME volume group, and then the $LV logical volume."
+		VGSCAN=`/usr/sbin/lvm.static vgscan --mknodes --ignorelockingfailure 2>&1`
+		echo "$VGSCAN" | grep 'Found volume group "'"$VG_NAME"'"' || VG_OK=0
+		if [ $VG_OK = 0 ] && echo "$VGSCAN" | grep 'Found exported volume group "'"$VG_NAME"'"'; then
+			VG_OK=1
+			/usr/sbin/lvm.static vgimport "$VG_NAME" || VG_OK=0
+		fi
+		[ $VG_OK = 1 ] && /usr/sbin/lvm.static vgchange -ay --ignorelockingfailure --poll n "$VG_NAME" || VG_OK=0
+		[ $VG_OK = 1 ] && /usr/sbin/lvm.static lvchange -ay --sysinit "$LV" || LV_OK=0
+		[ $LV_OK = 1 ] && [ -e "$LV" ] || LV_OK=0
+
+		# Determine the physical block device containing the VFAT partition.  It is assumed to be
+		# partition one of the storage device containing the physical volume of the $LV logical
+		# volume.  The physical volume block device of the rootfs is assumed to be partition two.
+		[ $LV_OK = 1 ] && ROOTPVDEV=`/usr/sbin/lvm.static lvs --ignorelockingfailure --noheadings --nosuffix -o devices "$VG_NAME" | sed -n "s/^ *//; s/ *$//; s/(.*)$//; 1p"`
+		VFATDEV=`echo $ROOTPVDEV | sed "s/2$/1/"`
+		MNT_VFAT_DIR="/mnt/vfat"
+
+		if [ $VG_OK = 0 ]; then
+			echo_yellow "[ramfs]: LVM did not find or import the $VG_NAME volume group. Retry after 1 second ..."
+		elif [ $LV_OK = 0 ]; then
+			echo_yellow "[ramfs]: LVM did not find or import the $LV logical volume. Retry after 1 second ..."
+		elif [ -z "$ROOTPVDEV" ]; then
+			echo_yellow "[ramfs]: LVM did not report a root file system physical volume device. Retry after 1 second ..."
+		else
+			echo_green "[ramfs]: LVM reported a root file system physical volume device of $ROOTPVDEV, which gives a VFAT device of $VFATDEV."
+			if [ -n "$SFR" ]; then
+				# A software factory reset is in progress.  The factory kernel has been launched
+				# by grub (i.e. this init function is part of the factory initramfs), and all that
+				# is left to do is copy the kernel and initramfs images, and then re-image the
+				# rootFS partition with the rootFS tarball.
+				echo_green "[ramfs-software factory reset]: Software Factory Reset is in progress."
+				echo_red "[ramfs-software factory reset]: !!! DO NOT TURN OFF THE MACHINE"
+				[ `grep -c ramfs-debugging /proc/cmdline` -eq 1 ] && exec /bin/sh
+
+				sleep 5
+
+				# Mount the VFAT partition.  It contains all the factory software.
+				MNT_VFAT_CURRENT=`mount | grep ${VFATDEV} | awk '{print $3}'`
+				if [ ! -z ${MNT_VFAT_CURRENT} ]
+				then
+					umount -f "${MNT_VFAT_CURRENT}"
+				fi
+				mkdir -p "$MNT_VFAT_DIR" ||
+					check_return_value $?  "[ramfs-software factory reset]: Error creating VFAT mount point: ${MNT_VFAT_DIR}"
+				fsck "$VFATDEV" >/dev/null 2>&1 ||
+					check_return_value $?  "[ramfs]: Disk Error: ${VFATDEV}"
+				mount "$VFATDEV" "$MNT_VFAT_DIR" ||
+					check_return_value "[ramfs-software factory reset]: Error when mounting VFAT partition to ${MNT_VFAT_DIR}"
+
+				# Change the grub default menu item to "software factory reset" in case experiencing power cycle while doing re-image the rootFS partition
+				for i in ${MNT_VFAT_DIR}/EFI/BOOT/*.default
+				do
+					cp -f ${MNT_VFAT_DIR}/EFI/BOOT/restoring_factory_images ${i}
+				done
+				sync
+
+				# Replace the kernel files with the factory ones.
+				if [ -f ${MNT_VFAT_DIR}/SFR/SFR-bzImage ]
+				then
+					echo_green "[ramfs-software factory reset]: Removing the old kernel."
+					rm -f ${MNT_VFAT_DIR}/bzImage*
+					echo_green "[ramfs-software factory reset]: Restoring kernel."
+					cp ${MNT_VFAT_DIR}/SFR/SFR-bzImage ${MNT_VFAT_DIR}/bzImage ||
+						echo_yellow "[ramfs]: Error when copying factory kernel."
+					[ -f ${MNT_VFAT_DIR}/SFR/SFR-bzImage.auth ] &&
+						cp ${MNT_VFAT_DIR}/SFR/SFR-bzImage.auth ${MNT_VFAT_DIR}/bzImage.auth
+					echo_green "[ramfs-software factory reset]: Restoration of kernel complete."
+					sync
+				else
+					echo_green "[ramfs-software factory reset]: Skipping restoration of kernel."
+				fi
+
+				# Replace the initramfs files with the factory ones.
+				if [ -f ${MNT_VFAT_DIR}/SFR/SFR-initramfs.img ]
+				then
+					echo_green "[ramfs-software factory reset]: Removing the old initramfs."
+					rm -f ${MNT_VFAT_DIR}/idp-initramfs*.img*
+					echo_green "[ramfs-software factory reset]: Restoring initramfs."
+					cp ${MNT_VFAT_DIR}/SFR/SFR-initramfs.img ${MNT_VFAT_DIR}/idp-initramfs.img ||
+						echo_yellow "[ramfs-software factory reset]: Error when copying factory initramfs.img."
+					[ -f ${MNT_VFAT_DIR}/SFR/SFR-initramfs.img.auth ] &&
+						cp ${MNT_VFAT_DIR}/SFR/SFR-initramfs.img.auth ${MNT_VFAT_DIR}/idp-initramfs.img.auth
+					echo_green "[ramfs-software factory reset]: Restoration of initramfs complete."
+					sync
+				else
+					echo_green "[ramfs-software factory reset]: Skipping restoration of initramfs."
+				fi
+
+				if [ -f ${MNT_VFAT_DIR}/SFR/SFR-rootFs.tar.bz2 ]
+				then
+					# Untar the root filesystem into the volume.
+					echo_green "[ramfs-software factory reset]: Remove the old root file system."
+					fsck "$LV" >/dev/null 2>&1 ||
+						check_return_value $?  "[ramfs-software factory reset]: Disk Error: ${LV}"
+					mkfs.ext3 -L "wr_rootfs" -I 128 "$LV" >/dev/null 2>&1
+					echo_green "[ramfs-software factory reset]: Extract the root file system into the partition."
+					mkdir -p /mnt/rootfs
+					mount "$LV" /mnt/rootfs ||
+						check_return_value "[ramfs-software factory reset]: Software Factory Reset : Mount of root file system failed."
+					tar -C /mnt/rootfs -mxjf ${MNT_VFAT_DIR}/SFR/SFR-rootFs.tar.bz2 --checkpoint=.1000
+					sync
+
+					# Unmount the partitions and get rid of the mount points.
+					echo_green "[ramfs-software factory reset]: Extraction of root file system complete."
+
+					umount /mnt/rootfs
+					rmdir /mnt/rootfs
+				else
+					echo_green "[ramfs-software factory reset]: Skipping extraction of root file system"
+				fi
+
+				# Change the grub default menu item to normal boot
+				rm -rf ${MNT_VFAT_DIR}/EFI/BOOT/restoring_factory_images
+				for i in ${MNT_VFAT_DIR}/EFI/BOOT/*.default
+				do
+					echo -n "0" > $i
+				done
+				sync
+
+				umount -f ${VFATDEV}
+				rmdir ${MNT_VFAT_DIR}
+			fi
+
+			# check software factory reset flag
+
+			# Mount the VFAT partition.  It contains all the factory software.
+			MNT_VFAT_CURRENT=`mount | grep ${VFATDEV} | awk '{print $3}'`
+			if [ ! -z ${MNT_VFAT_CURRENT} ]
+			then
+				umount -f "${MNT_VFAT_CURRENT}"
+			fi
+			mkdir -p "$MNT_VFAT_DIR" ||
+				check_return_value $?  "[ramfs]: Error creating VFAT mount point: ${MNT_VFAT_DIR}"
+			fsck "$VFATDEV" >/dev/null 2>&1 ||
+				check_return_value $?  "[ramfs]: Disk Error: ${VFATDEV}"
+			mount "$VFATDEV" "$MNT_VFAT_DIR" ||
+				check_return_value "[ramfs]: Error when mounting VFAT partition to ${MNT_VFAT_DIR}"
+
+			if [ -f ${MNT_VFAT_DIR}/EFI/BOOT/restoring_factory_images ]
+			then
+				for i in ${MNT_VFAT_DIR}/EFI/BOOT/*.default
+				do
+					cp -f ${MNT_VFAT_DIR}/EFI/BOOT/restoring_factory_images ${i}
+				done
+				sync
+				echo_red "[ramfs-software factory reset]: Software Factory Reset was interrupted. Resuming in 5 seconds..."
+				umount -f ${VFATDEV}
+				rmdir ${MNT_VFAT_DIR}
+				sleep 5
+				reboot -f
+			else
+				umount -f ${VFATDEV}
+				rmdir ${MNT_VFAT_DIR}
+			fi
+
+			break
+		fi
+
+		# The LVM operations failed.  Clean up so that the retry may succeed.
+		/usr/sbin/lvm.static lvchange -an --sysinit "$LV"
+		/usr/sbin/lvm.static vgexport "$VG_NAME"
+	else
+		ROOTDEV="$RDEV"
+		# If the given root FS device exists as a known block device, we're done.
+		[ -e /sys/class/block/`basename "$RDEV"` ] && break
+	fi
+
+	sleep 1
+	let try_count--
+	echo_yellow "[ramfs]: Trying to find $ROOTDEV.  Remaining attempts: $try_count."
+done
+
+if [ $try_count -eq 0 ]; then
+	echo_red "[ramfs]: Could not find $ROOTDEV. Rebooting in 5 seconds..."
+	sleep 5
+	reboot -f
+fi
+
+echo_green "[ramfs]: Got root device: $ROOTDEV"
+mount -o $ACCESS_MODE "$ROOTDEV" /mnt
+
+# run init scriptdevs
+for i in /etc/init/* ; do
+	grep -q 'console=' /proc/cmdline && /bin/sh $i > /dev/null || /bin/sh $i
+done
+
+[ `grep -c ramfs-debugging /proc/cmdline` -eq 1 ] && exec /bin/sh
+
+# do cleanup before switch_root
+umount /sys
+umount /tmp
+umount /dev
+
+# if recovery flag set, switch root to aufs
+if [ -f /mnt/etc/.recovery ]; then
+	mount -o remount,ro /mnt
+	mkdir -p /tmp/.rw
+	mount -t tmpfs tmpfs /tmp/.rw
+	mount -w -t aufs -o br=/tmp/.rw=rw:/mnt=ro none /tmp/.rw
+	umount /proc
+	exec /sbin/switch_root /tmp/.rw /sbin/init $@
+fi
+
+umount /proc
+
+echo_green "[ramfs]: Switching to the root file system with initialization parameter(s): $@"
+exec /sbin/switch_root /mnt /sbin/init $@
+
+echo_red "[ramfs]: Unexpected end of Software Factory Reset script"
+while true ; do exec /bin/sh ; done

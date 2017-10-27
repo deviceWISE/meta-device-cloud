@@ -1,0 +1,109 @@
+#!/bin/sh
+# This file is called from init, it already mounted the rootfs on /mnt
+WRA_TRIGGER_TIMER_FLAG="/mnt/var/lib/python-device-cloud/ota_timer_triggered"
+WRA_BOOTONCE_FLAG="/mnt/var/lib/python-device-cloud/ota_bootonce"
+WRA_ROLLBACK_FLAG="/mnt/var/lib/python-device-cloud/ota_rollback_enabled"
+LVM_ROLLBACK="NO"
+
+# cmdline
+LV=$(cat /proc/cmdline|grep -o '\<root=LVM=[^ ]*'|cut -d "=" -f 3|sed 's/"//g')
+ROOTMODE="rw"
+if [ -z ${LV} ] ; then
+	echo "Not a LVM volume, rollback not available"
+	exit 0
+fi
+
+BOOTONCE=`cat /proc/cmdline | grep -o bootonce`
+if [ "${BOOTONCE}" = "bootonce" ] ; then
+	# it is a bootonce kernel, do not check rollback flag.
+	# If the kernel fail, grub will boot the old kernel, then the
+	# rollback rootfs will happen
+	echo "Bootonce kernel continue"
+	exit 0
+fi
+
+# not a bootonce kernel and WRA_BOOTONCE_FLAG is enabled. So grub must have boot
+# the old kernel, need to rollback rootfs
+if [ -e ${WRA_BOOTONCE_FLAG} ] ; then
+	echo "Bootonce kernel failed, rollback to previous snapshot."
+	LVM_ROLLBACK="YES"
+fi
+
+# WRA_TRIGGER_TIMER_FLAG and WRA_ROLLBACK_FLAG
+# WRA_TRIGGER_TIMER_FLAG is set by OTA installer to start watchdog timer
+# WRA_ROLLBACK_FLAG is set by OTA installer or by watchdog timer when expired
+if [ -e ${WRA_TRIGGER_TIMER_FLAG} ] ; then
+	if [ -e ${WRA_ROLLBACK_FLAG} ] ; then
+		echo "${WRA_TRIGGER_TIMER_FLAG} and ${WRA_ROLLBACK_FLAG} exists, rollback now."
+		LVM_ROLLBACK="YES"
+	fi
+fi
+
+# exit if rollback is not YES
+if [ "${LVM_ROLLBACK}" != "YES" ] ; then
+	exit 0
+fi
+
+# rollback now
+echo "Start rollback ... "
+sleep 10
+
+ROOTDEV=`/sbin/blkid ${LV} | awk -F: '{print $1}'`
+
+# LVM utilities
+if [ -e /usr/sbin/pvdisplay ] ; then
+	PVDISPLAY="pvdisplay"
+	LVDISPLAY="lvdisplay"
+	VGSCAN="vgscan"
+	LVCONVERT="lvconvert"
+	LVCHANGE="lvchange"
+else
+	PVDISPLAY="/usr/sbin/lvm.static pvdisplay"
+	LVDISPLAY="/usr/sbin/lvm.static lvdisplay"
+	VGSCAN="/usr/sbin/lvm.static vgscan"
+	LVCONVERT="/usr/sbin/lvm.static lvconvert"
+	LVCHANGE="/usr/sbin/lvm.static lvchange"
+fi
+
+LV_INFO=`${LVDISPLAY} ${ROOTDEV} -c 2> /dev/null`
+
+# exit if the mount point is not a LVM volume
+if [ -z $LV_INFO ]; then
+    echo "${ROOTDEV} not a LVM volume"
+    exit 0
+fi
+
+# in order to mount the snapshot, scan volume group and mknodes in /dev/mapper/
+${VGSCAN} --mknodes --ignorelockingfailure
+
+# find the LV_NAME and VG_NAME of the volume
+LV_NAME=$(basename `echo ${LV_INFO} | awk -F':' '{ print $1 }'`)
+VG_NAME=`echo ${LV_INFO} | awk -F':' '{ print $2 }'`
+SNAPSHOT_VOL=/dev/${VG_NAME}/${LV_NAME}_snapshot
+
+# rollback to the original volume, the snapshot will be gone after the merge
+echo "Roll back to ${SNAPSHOT_VOL}"
+${LVCONVERT} --merge ${SNAPSHOT_VOL}
+
+# unmount, re-activate and mount the volume
+umount /mnt
+
+# re-activate the volume
+${LVCHANGE} -an ${LV} --ignorelockingfailure --poll n
+${LVCHANGE} -ay ${LV} --ignorelockingfailure --poll n
+${LVCHANGE} --refresh ${LV} --ignorelockingfailure --poll n --noudevsync --monitor n
+
+# mount the volume
+ROOTDEV=""
+echo -n "[ramfs]: waiting ${LV} "
+while  [ "${ROOTDEV}" != "${LV}" ]
+do
+	echo -n "."
+	sleep 1
+	ROOTDEV=`/sbin/blkid ${LV} | awk -F: '{print $1}'`
+done
+echo " "
+mount -o $ROOTMODE ${ROOTDEV} /mnt
+
+# wait a bit for volume to be ready
+sleep 10
