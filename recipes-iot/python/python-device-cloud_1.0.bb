@@ -4,7 +4,7 @@ LICENSE = "Apache-2.0"
 SECTION = "devel/python"
 LIC_FILES_CHKSUM = "file://COPYING.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRCREV = "d9b3818ccec5a7571e13dc8d7c555d69cb927cb1"
+SRCREV = "${AUTOREV}"
 
 # for now, prepopulate this in the downloads directory
 SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
@@ -17,6 +17,7 @@ ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
 SHARE_DIR = "/usr/share"
+
 
 # Note: support python2 by default
 
@@ -56,16 +57,33 @@ SYSTEMD_PACKAGES = "${PN}-systemd"
 # device-cloud-python must be able to coexsit with previous HDC versions.  So, install
 # into its own namespace.
 do_install_append() {
+	DETECT_IDP="${@bb.utils.contains('LINUX_KERNEL_TYPE', 'idp', 'idp', '', d)}"
 
 	install -d ${D}/${SHARE_DIR}
 	install -d ${D}/${ETC_DIR}
 	install -d ${D}/${VAR_DIR}
 	install -d ${D}/${BIN_DIR}
 	install -d ${D}${systemd_unitdir}/system/
-	install -d ${D}/${sysconfdir}/sudoers.d
+	#install -d ${D}/${sysconfdir}/sudoers.d
 
 	echo "Installing: ${B}/share/device-manager.service into ${D}${systemd_unitdir}/system "
 	install -m 0644 "${B}/share/device-manager.service" ${D}${systemd_unitdir}/system/
+
+	# update the working directory
+	sed -i "s|^#WorkingDirectory.*|WorkingDirectory=${VAR_DIR}|"  ${D}${systemd_unitdir}/system/device-manager.service
+
+	# iot service watchdog for OTA and rollback on IDP only
+	if [ "$DETECT_IDP" = "idp" ]; then
+		echo "IDP detected, installing watchdog files"
+		install -m 0755 "${B}/share/iot-watchdog-test.sh" ${D}${BIN_DIR}
+		install -m 0755 "${B}/share/iot-watchdog.conf" ${D}${ETC_DIR}
+		install -m 0755 "${B}/share/iot-watchdog" ${D}${BIN_DIR}
+		install -m 0644 "${B}/share/iot-watchdog.service" ${D}${systemd_unitdir}/system/
+		sed -i -e "s|%vardir%|${VAR_DIR}|" "${D}${BIN_DIR}/iot-watchdog-test.sh"
+		sed -i -e "s|%bindir%|${BIN_DIR}|" "${D}${ETC_DIR}/iot-watchdog.conf"
+		sed -i -e "s|%etcdir%|${ETC_DIR}|" "${D}${BIN_DIR}/iot-watchdog"
+		sed -i -e "s|%bindir%|${BIN_DIR}|" "${D}${systemd_unitdir}/system/iot-watchdog.service"
+	fi
 
 	# uncomment when running as non root user
 	#install -m 0400 "${WORKDIR}/device-cloud.sudoers" "${D}/${sysconfdir}/sudoers.d/hdc"
