@@ -72,17 +72,24 @@ do_install_append() {
 	# update the working directory
 	sed -i "s|^#WorkingDirectory.*|WorkingDirectory=${VAR_DIR}|"  ${D}${systemd_unitdir}/system/device-manager.service
 
+	# post process the vars for paths
+	cat ${B}/share/cloud-test.py.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+		-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/cloud-test.py"
+	install -m 0755 "${B}/share/cloud-test.py" ${D}${BIN_DIR}
+
 	# iot service watchdog for OTA and rollback on IDP only
 	if [ "$DETECT_IDP" = "idp" ]; then
 		echo "IDP detected, installing watchdog files"
+
+		# post process the vars for paths
+		cat ${B}/share/iot-watchdog-test.sh.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog-test.sh"
+		cat ${B}/share/iot-watchdog.conf.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog.conf"
+
 		install -m 0755 "${B}/share/iot-watchdog-test.sh" ${D}${BIN_DIR}
 		install -m 0755 "${B}/share/iot-watchdog.conf" ${D}${ETC_DIR}
-		install -m 0755 "${B}/share/iot-watchdog" ${D}${BIN_DIR}
-		install -m 0644 "${B}/share/iot-watchdog.service" ${D}${systemd_unitdir}/system/
-		sed -i -e "s|%vardir%|${VAR_DIR}|" "${D}${BIN_DIR}/iot-watchdog-test.sh"
-		sed -i -e "s|%bindir%|${BIN_DIR}|" "${D}${ETC_DIR}/iot-watchdog.conf"
-		sed -i -e "s|%etcdir%|${ETC_DIR}|" "${D}${BIN_DIR}/iot-watchdog"
-		sed -i -e "s|%bindir%|${BIN_DIR}|" "${D}${systemd_unitdir}/system/iot-watchdog.service"
+		install -m 0755 "${B}/share/snapshot_util.py" ${D}${BIN_DIR}
 	fi
 
 	# uncomment when running as non root user
@@ -91,7 +98,7 @@ do_install_append() {
 	install -m 644 "${B}/COPYING.txt" ${D}/${SHARE_DIR}
     	cp -r ${B}/demo  ${D}/${SHARE_DIR}
     	cp ${B}/README* ${D}/${SHARE_DIR}
-    	cp -r ${B}/share/example-ota-package ${D}/${SHARE_DIR}
+    	cp -r ${B}/share/example-ota-packages ${D}/${SHARE_DIR}
 
 	# change the #! line to use python not python3 which is the default
 	sed -i 's/env python3/env python/' ${D}/${SHARE_DIR}/demo/*.py
