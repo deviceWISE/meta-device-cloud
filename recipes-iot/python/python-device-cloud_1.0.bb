@@ -4,10 +4,11 @@ LICENSE = "Apache-2.0"
 SECTION = "devel/python"
 LIC_FILES_CHKSUM = "file://COPYING.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRCREV = "${AUTOREV}"
+#SRCREV = "${AUTOREV}"
+SRCREV = "39543495f7c1e1e97f598fd5b92df343e971e1e1"
 
 # for now, prepopulate this in the downloads directory
-SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
+SRC_URI = "git://github.com/Wind-River/device-cloud-python.git;branch=non-root-user"
 
 S = "${WORKDIR}/git"
 RDEPENDS_${PN} += "${PN}-systemd bash sudo"
@@ -16,7 +17,7 @@ RDEPENDS_${PN}-systemd += "bash"
 ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
-SHARE_DIR = "/usr/share"
+SHARE_DIR = "/usr/share/${PN}"
 
 
 # Note: support python2 by default
@@ -54,6 +55,9 @@ PACKAGES =+ "${PN}-systemd"
 SYSTEMD_SERVICE_${PN}-systemd += "device-manager.service"
 SYSTEMD_PACKAGES = "${PN}-systemd"
 
+# pull in the user id details
+require device-cloud-user.inc
+
 # device-cloud-python must be able to coexsit with previous HDC versions.  So, install
 # into its own namespace.
 do_install_append() {
@@ -64,9 +68,10 @@ do_install_append() {
 	install -d ${D}/${VAR_DIR}
 	install -d ${D}/${BIN_DIR}
 	install -d ${D}${systemd_unitdir}/system/
-	#install -d ${D}/${sysconfdir}/sudoers.d
+	install -d ${D}/${sysconfdir}/sudoers.d
 
-	echo "Installing: ${B}/share/device-manager.service into ${D}${systemd_unitdir}/system "
+	install -m 0400 "${B}/share/sudoers.d/device-cloud" "${D}/${sysconfdir}/sudoers.d/device-cloud"
+	cat ${B}/share/device-manager.service.in | sed -e "s|%user%|${DC_USER}|" > "${B}/share/device-manager.service"
 	install -m 0644 "${B}/share/device-manager.service" ${D}${systemd_unitdir}/system/
 
 	# update the working directory
@@ -92,8 +97,6 @@ do_install_append() {
 		install -m 0755 "${B}/share/snapshot_util.py" ${D}${BIN_DIR}
 	fi
 
-	# uncomment when running as non root user
-	#install -m 0400 "${WORKDIR}/device-cloud.sudoers" "${D}/${sysconfdir}/sudoers.d/hdc"
 
 	install -m 644 "${B}/COPYING.txt" ${D}/${SHARE_DIR}
     	cp -r ${B}/demo  ${D}/${SHARE_DIR}
@@ -129,5 +132,16 @@ do_install_append() {
 
 }
 FILES_${PN} += "${SHARE_DIR} ${VAR_DIR} ${ETC_DIR} ${BIN_DIR}"
+FILES_${PN} += "/etc/sudoers.d/device-cloud"
 FILES_${PN}-systemd += "${systemd_unitdir}"
 
+
+pkg_postinst_${PN}() {
+#!/bin/sh -e
+if [ x"$D" = "x" ]; then
+    chown -R ${DC_USER}:${DC_GROUP} ${VAR_DIR}
+    chown -R ${DC_USER}:${DC_GROUP} ${ETC_DIR}
+else
+    exit 1
+fi
+}
