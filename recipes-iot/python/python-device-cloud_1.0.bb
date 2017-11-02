@@ -120,6 +120,7 @@ do_install_append() {
 	# update the config dir
 	sed -i "s|:\"runtime\"|:\"${VAR_DIR}\"|" ${B}/iot.cfg
 	sed -i "s|default_cfg_dir = \".\"|default_cfg_dir = \"${ETC_DIR}\"|" ${B}/device_manager.py
+	sed -i "s|systemd_controlled = False|systemd_controlled = True|" ${B}/device_manager.py
 
 	# install scripts
 	install -m 755 ${B}/device_manager.py ${D}/${BIN_DIR}
