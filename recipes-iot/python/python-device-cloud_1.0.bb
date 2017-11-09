@@ -11,7 +11,7 @@ SRCREV = "39543495f7c1e1e97f598fd5b92df343e971e1e1"
 SRC_URI = "git://github.com/Wind-River/device-cloud-python.git;branch=non-root-user"
 
 S = "${WORKDIR}/git"
-RDEPENDS_${PN} += "${PN}-systemd bash sudo"
+RDEPENDS_${PN} += "${PN}-systemd bash sudo inetutils-telnetd"
 RDEPENDS_${PN}-systemd += "bash"
 
 ETC_DIR = "/etc/${PN}"
