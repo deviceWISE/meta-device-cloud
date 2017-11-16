@@ -18,15 +18,12 @@ VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
 SHARE_DIR = "/usr/share/${PN}"
 
-DEPENDS += "${PYTHON_PN}-pytest-runner"
-
 RDEPENDS_${PN} += "\
     bash \
     ${PYTHON_PN}-core \
     ${PYTHON_PN}-unixadmin \
     ${PYTHON_PN}-io \
     ${PYTHON_PN}-certifi \
-    ${PYTHON_PN}-pytest-runner \
     ${PYTHON_PN}-paho-mqtt \
     ${PYTHON_PN}-json \
     ${PYTHON_PN}-logging \

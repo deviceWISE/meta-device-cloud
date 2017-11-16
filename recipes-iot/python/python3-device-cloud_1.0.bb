@@ -5,4 +5,4 @@ inherit setuptools3 systemd
 require device-cloud-user.inc
 
 # all details are in device-cloud-common.inc
-require device-cloud
+require device-cloud-common.inc
