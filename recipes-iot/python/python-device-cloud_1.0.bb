@@ -6,6 +6,4 @@ require device-cloud-user.inc
 
 # all details are in device-cloud-common.inc
 require device-cloud-common.inc
-DEPENDS += "${PYTHON_PN}-pytest-runner"
-RDEPENDS_${PN} += "${PYTHON_PN}-pytest-runner"
 
