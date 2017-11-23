@@ -10,7 +10,7 @@ SRCREV = "${AUTOREV}"
 SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
 
 S = "${WORKDIR}/git"
-RDEPENDS_${PN} += "${PN}-systemd bash sudo inetutils-telnetd"
+RDEPENDS_${PN} += "${PN}-systemd bash sudo inetutils-telnetd python-backports-ssl python-pip"
 RDEPENDS_${PN}-systemd += "bash"
 
 ETC_DIR = "/etc/${PN}"
