@@ -45,57 +45,20 @@ Tested on build machine iotbuild4
 	bitbake-layers add-layer ../layers/meta-openembedded/meta-networking
 	bitbake-layers add-layer ../../repos/meta-openembedded/meta-oe
 	bitbake-layers add-layer ../layers/meta-device-cloud
-# update the white list (see below)
 # update local.conf (see below)
 	bitbake wrlinux-image-glibc-std
 ```
 
 Whitelist
 ---------
-Python3 only:
-Add the following to the white list.  Open
-layers/wr-base/conf/wrlinux-whitelist.conf and add the following to the
-PNWHITELIST_meta-python section:
-```
-    python3-pysocks \
-    python3-certifi \
-    python3-requests \
-    python3-urllib3 \
-    python3-ndg-httpsclient \
-    python3-pyopenssl \
-    python3-pyasn1 \
-    python3-cryptography \
-    python3-cffi \
-    python3-pycparser \
-    python3-idna \
-    python3-pytest-native \
-    python3-py-native \
-    python3-argparse-native \
-    python-paho-mqtt \
-    python-pysocks \
-    python-certifi \
-    python-requests \
-    python-urllib3 \
-    python-ndg-httpsclient \
-    python-pyopenssl \
-    python-pyasn1 \
-    python-cryptography \
-    python-cffi \
-    python-pycparser \
-    python-idna \
-    python-websocket-client \
-    python-ipaddress \
-    python-backports-ssl \
-    python-pytest-runner \
-    python-setuptools-scm \
-
-```
-
-Note: if you see an error saying 
+By default, all required python modules are added to the
+meta-device-cloud-whitelist.conf file.  If new modules are added and
+you are seeing this error:
 
 	ERROR: <pkgname> was skipped: Not supported by Wind River. See documentation on enabling.
 
-that means it needs to be added to the whitelist.
+that means the new module needs to be added to the whitelist.
+
 
 local.conf specific changes
 ---------------------------
