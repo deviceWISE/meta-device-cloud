@@ -57,6 +57,20 @@ Add the following to the white list.  Open
 layers/wr-base/conf/wrlinux-whitelist.conf and add the following to the
 PNWHITELIST_meta-python section:
 ```
+    python3-pysocks \
+    python3-certifi \
+    python3-requests \
+    python3-urllib3 \
+    python3-ndg-httpsclient \
+    python3-pyopenssl \
+    python3-pyasn1 \
+    python3-cryptography \
+    python3-cffi \
+    python3-pycparser \
+    python3-idna \
+    python3-pytest-native \
+    python3-py-native \
+    python3-argparse-native \
     python-paho-mqtt \
     python-pysocks \
     python-certifi \
@@ -71,18 +85,10 @@ PNWHITELIST_meta-python section:
     python-idna \
     python-websocket-client \
     python-ipaddress \
-    python3-pysocks \
-    python3-certifi \
-    python3-requests \
-    python3-urllib3 \
-    python3-ndg-httpsclient \
-    python3-pyopenssl \
-    python3-pyasn1 \
-    python3-cryptography \
-    python3-cffi \
-    python3-pycparser \
-    python3-idna \
     python-backports-ssl \
+    python-pytest-runner \
+    python-setuptools-scm \
+
 ```
 
 Note: if you see an error saying 
@@ -106,9 +112,10 @@ KERNEL_FEATURES_append = " cfg/systemd.scc"
 
 Add Packages To Image
 ---------------------
-Append the following to conf/wrimage_intel-x86-64.inc:
+Append the following to conf/local.conf
+(Note: the leading space in the string below " python..." is required.)
 ```
-IMAGE_INSTALL += "python-device-cloud python-pip"
+IMAGE_INSTALL_append += " python-device-cloud python-pip"
 ```
 
 Flashing Image To USB
