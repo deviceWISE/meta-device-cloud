@@ -34,21 +34,31 @@ git clone /opt/WindRiver/WRL9_Mirror/WRLinux-9-LTS-CVE/meta-openembedded
 
 Fix some problems in bitbake files
 ----------------------------------
-```
   * the version of python-dbus in meta-openembedded/meta-python
-  conflicts with the version in oe-core.  Remove the
-  meta-openembedded one, and use the oe-core version:
+  conflicts with the version in oe-core.  Remove the meta-openembedded
+  one from the build, and use the oe-core version:
+
 ```sh
+# rename python-dbus_1.2.4.bb to python-dbus_1.2.4_bb to exclude it from the build
 mv ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4.bb ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4_bb
 ```
 
 Update the bblayers.conf
 ------------------------
 Add meta-device-cloud and meta-openembedded, e.g.
-	$ vim bitbake_build/conf/bblayers.conf
-add to the BBLAYERS list:
+
+```sh
+vim bitbake_build/conf/bblayers.conf
+```
+
+add to the BBLAYERS list, recommend adding the following before 
+*${WRL_TOP_BUILD_DIR}/layers/local* line:
+
+
+```
 	${WRL_TOP_BUILD_DIR}/layers/meta-openembedded/meta-python \
 	${WRL_TOP_BUILD_DIR}/layers/meta-device-cloud \
+```
 
 Build the image
 ---------------
