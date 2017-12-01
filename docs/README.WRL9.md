@@ -62,6 +62,13 @@ that means the new module needs to be added to the whitelist.
 
 local.conf specific changes
 ---------------------------
+Append the following to conf/local.conf
+(Note: the leading space in the string below " python..." is required.)
+
+```
+IMAGE_INSTALL_append += " python-device-cloud python-pip"
+```
+
 Make sure systemd is set as the init_manager.  The section should look
 like:
 ```
@@ -73,13 +80,6 @@ DISTRO_FEATURES_BACKFILL_CONSIDERED += "sysvinit"
 KERNEL_FEATURES_append = " cfg/systemd.scc"
 ```
 
-Add Packages To Image
----------------------
-Append the following to conf/local.conf
-(Note: the leading space in the string below " python..." is required.)
-```
-IMAGE_INSTALL_append += " python-device-cloud python-pip"
-```
 
 Flashing Image To USB
 ---------------------
