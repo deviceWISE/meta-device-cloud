@@ -1,3 +1,6 @@
+#
+# Copyright (C) 2017 Wind River Systems, Inc.
+#
 # Python 2
 inherit setuptools systemd
 

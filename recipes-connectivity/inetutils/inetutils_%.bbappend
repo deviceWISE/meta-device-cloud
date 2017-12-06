@@ -1,3 +1,6 @@
+#
+# Copyright (C) 2017 Wind River Systems, Inc.
+#
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 # update the telnet config to bind to localhost only

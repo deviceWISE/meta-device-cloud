@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# Copyright (C) 2017 Wind River Systems, Inc.
+#
 # This file is called from init, it already mounted the rootfs on /mnt
 WRA_TRIGGER_TIMER_FLAG="/mnt/var/lib/python-device-cloud/ota_timer_triggered"
 WRA_BOOTONCE_FLAG="/mnt/var/lib/python-device-cloud/ota_bootonce"
