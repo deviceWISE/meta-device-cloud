@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2017 Wind River Systems, Inc.
+#
+
 DESCRIPTION = "Python library for Helix Device Cloud"
 HOMEPAGE = "https://github.com/Wind-River/device-cloud-python.git"
 LICENSE = "Apache-2.0"

@@ -1,3 +1,6 @@
+#
+# Copyright (C) 2017 Wind River Systems, Inc.
+#
 inherit useradd
 
 # add user and group for DC
