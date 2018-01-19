@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2017 Wind River Systems, Inc.
+# License: MIT
 #
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 

@@ -1,6 +1,8 @@
 #
 # Copyright(c) 2013 Wind River Systems, Inc.
+# License: MIT
 #
+
 PR =  "r1"
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 SRC_URI += "file://lvmcheck \

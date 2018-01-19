@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2017 Wind River Systems, Inc.
+# License: MIT
 #
 # Python 3
 inherit setuptools3 systemd

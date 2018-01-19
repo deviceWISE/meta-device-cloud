@@ -1,3 +1,7 @@
+# Copyright (C) 2017 Wind River Systems, Inc.
+# License: MIT
+#
+
 # default: on
 # description: The telnet server serves telnet sessions; it uses \
 #       unencrypted username/password pairs for authentication. \
