@@ -48,6 +48,9 @@ PACKAGES =+ "${PN}-systemd"
 SYSTEMD_SERVICE_${PN}-systemd += "device-manager.service"
 SYSTEMD_PACKAGES = "${PN}-systemd"
 
+INITSCRIPT_NAME = "device-manager-sysv-init"
+INITSCRIPT_PARAMS = "start 10 2 3 4 5 . stop 32 0 1 6 ."
+
 # device-cloud-python must be able to coexsit with previous HDC versions.  So, install
 # into its own namespace.
 do_install_append() {
@@ -59,10 +62,22 @@ do_install_append() {
 	install -d ${D}/${BIN_DIR}
 	install -d ${D}${systemd_unitdir}/system/
 	install -d ${D}/${sysconfdir}/sudoers.d
+        install -d ${D}${sysconfdir}/init.d
 
+	# sudoers file
 	install -m 0400 "${B}/share/sudoers.d/device-cloud" "${D}/${sysconfdir}/sudoers.d/device-cloud"
+
+	# --------------------------------------------------------
+	# install both sysv and systemd.  Let the distro features
+	# --------------------------------------------------------
+
+	# systemd service
 	cat ${B}/share/device-manager.service.in | sed -e "s|%user%|${DC_USER}|" > "${B}/share/device-manager.service"
 	install -m 0644 "${B}/share/device-manager.service" ${D}${systemd_unitdir}/system/
+
+	# sysv init script
+	cat ${B}/share/device-manager-sysv-init.in | sed -e "s|%user%|${DC_USER}|" > "${B}/share/device-manager-sysv-init"
+	install -m 0755 "${B}/share/device-manager-sysv-init" ${D}${sysconfdir}/init.d/device-manager-sysv-init
 
 	# update the working directory
 	sed -i "s|^#WorkingDirectory.*|WorkingDirectory=${VAR_DIR}|"  ${D}${systemd_unitdir}/system/device-manager.service
@@ -87,25 +102,12 @@ do_install_append() {
 		install -m 0755 "${B}/share/snapshot_util.py" ${D}${BIN_DIR}
 	fi
 
-
 	install -m 644 "${B}/COPYING.txt" ${D}/${SHARE_DIR}
     	cp -r ${B}/demo  ${D}/${SHARE_DIR}
     	cp ${B}/README* ${D}/${SHARE_DIR}
     	cp -r ${B}/share/example-ota-packages ${D}/${SHARE_DIR}
 
-	# change the #! line to use python not python3 which is the default
-	sed -i "s/env python\?/env ${PYTHON_PN}/" ${D}/${SHARE_DIR}/demo/*.py
-   
-	# fix python version, this is python 2.x, so check for python3
-	for i in device_manager.py generate_config.py validate_script.py validate_app.py; do
-	{
-		echo "converting ${S}/${i} to ${B}/${i}"
-		sed -i "s/env python\?/env ${PYTHON_PN}/" ${B}/${i}
-	} done
-
-	# TODO: update the demo app config/runtime dirs
 	# update the runtime dir in iot.cfg
-	# update the config dir
 	sed -i "s|:\"runtime\"|:\"${VAR_DIR}\"|" ${B}/iot.cfg
 	sed -i "s|default_cfg_dir = \".\"|default_cfg_dir = \"${ETC_DIR}\"|" ${B}/device_manager.py
 	sed -i "s|systemd_controlled = False|systemd_controlled = True|" ${B}/device_manager.py

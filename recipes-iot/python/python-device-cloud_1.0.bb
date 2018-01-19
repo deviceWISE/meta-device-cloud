@@ -3,7 +3,7 @@
 # License: MIT
 #
 # Python 2
-inherit setuptools systemd
+inherit setuptools update-rc.d systemd
 
 # pull in the user id details
 require device-cloud-user.inc
