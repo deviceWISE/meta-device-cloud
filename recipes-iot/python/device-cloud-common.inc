@@ -20,7 +20,7 @@ RDEPENDS_${PN}-systemd += "bash"
 ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
 BIN_DIR = "${bindir}"
-SHARE_DIR = "/usr/share/${PN}"
+SHARE_DIR = "/usr/share/device_cloud"
 
 RDEPENDS_${PN} += "\
     bash \
@@ -123,7 +123,7 @@ do_install_append() {
 
 }
 FILES_${PN} += "${SHARE_DIR} ${VAR_DIR} ${ETC_DIR} ${BIN_DIR}"
-FILES_${PN} += "/etc/sudoers.d/device-cloud"
+FILES_${PN} += "/etc/sudoers.d/device-cloud ${sysconfdir}/init.d"
 FILES_${PN}-systemd += "${systemd_unitdir}"
 
 
