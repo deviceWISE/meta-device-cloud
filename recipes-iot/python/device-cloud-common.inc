@@ -14,8 +14,11 @@ SRCREV = "${AUTOREV}"
 SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
 
 S = "${WORKDIR}/git"
-RDEPENDS_${PN} += "${PN}-systemd bash sudo inetutils-telnetd python-backports-ssl python-pip"
+RDEPENDS_${PN} += "bash sudo inetutils-telnetd python-backports-ssl python-pip"
 RDEPENDS_${PN}-systemd += "bash"
+
+# set a runtime dep on the system pkg if systemd is enabled
+RDEPENDS_${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${PN}-systemd', '', d)}"
 
 ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
