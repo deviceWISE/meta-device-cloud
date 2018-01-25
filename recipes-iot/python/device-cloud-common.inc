@@ -16,9 +16,11 @@ SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
 S = "${WORKDIR}/git"
 RDEPENDS_${PN} += "bash sudo inetutils-telnetd python-backports-ssl python-pip"
 RDEPENDS_${PN}-systemd += "bash"
-
-# set a runtime dep on the system pkg if systemd is enabled
 RDEPENDS_${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${PN}-systemd', '', d)}"
+
+INITSCRIPT_PACKAGES = "python-device-cloud"
+INITSCRIPT_NAME_python-device-cloud = "device-manager-sysv-init"
+INITSCRIPT_PARAMS_python-device-cloud = "defaults 21 19"
 
 ETC_DIR = "/etc/${PN}"
 VAR_DIR = "${localstatedir}/lib/${PN}"
