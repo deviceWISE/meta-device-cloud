@@ -14,7 +14,7 @@ SRCREV = "${AUTOREV}"
 SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
 
 S = "${WORKDIR}/git"
-RDEPENDS_${PN} += "bash sudo inetutils-telnetd python-backports-ssl python-pip"
+RDEPENDS_${PN} += "bash sudo inetutils-telnetd python-pip"
 RDEPENDS_${PN}-systemd += "bash"
 RDEPENDS_${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${PN}-systemd', '', d)}"
 
