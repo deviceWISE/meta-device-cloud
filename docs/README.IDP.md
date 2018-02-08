@@ -10,25 +10,31 @@ Note: at the time of this writing, the meta-device-cloud and the
 oe-core patched repositories are not public.  The following procedure
 will work only for those with WindRiver network access.
 
+RCPL Supported
+--------------
+This document has been updated to support RCPL0027 + only.  Previous
+RCPLs did not have the correct version of python.
 
 Configure without device-cloud
 ------------------------------
 This is an example configuration.  Add any specific layers required.
 
 ```sh
-/opt/WindRiver/IDP21_RCPL0022_XT3.1_Windshare/wrlinux-7/wrlinux/configure --enable-rootfs=idp --enable-addons=wr-idp --enable-kernel=idp  --without-layer=wr-srm,wr-mcafee --enable-board=intel-baytrail-64 --with-rcpl-version=0022
+# e.g.:
+/opt/WindRiver/IDP_3_xt_LB21_7.0_RCPL0027_Windshare/wrlinux-7/wrlinux/configure --enable-rootfs=idp --enable-addons=wr-idp --enable-kernel=idp  --without-layer=wr-srm,wr-mcafee --enable-board=intel-baytrail-64 --with-template=feature/python279 --with-rcpl-version=0027
 ```
 
 Update the layers
 -----------------
-
+From your workspace:
 ```sh
 cd layers
-rm -fr oe-core
+
 # clone
-git clone http://stash.wrs.com/scm/hpr/oe-core-idp.git oe-core
 git clone https://github.com/Wind-River/meta-device-cloud.git
-git clone /opt/WindRiver/WRL9_Mirror/WRLinux-9-LTS-CVE/meta-openembedded
+
+# clone the morty branch
+git clone https://github.com/openembedded/meta-openembedded.git -b morty
 
 ```
 
@@ -39,8 +45,8 @@ Fix some problems in bitbake files
   one from the build, and use the oe-core version:
 
 ```sh
-# rename python-dbus_1.2.4.bb to python-dbus_1.2.4_bb to exclude it from the build
-mv ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4.bb ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4_bb
+# Remove python-dbus_1.2.4.bb from the build
+rm ./meta-openembedded/meta-python/recipes-devtools/python/python-dbus_1.2.4.bb
 ```
 
 Update the bblayers.conf
@@ -48,6 +54,7 @@ Update the bblayers.conf
 Add meta-device-cloud and meta-openembedded, e.g.
 
 ```sh
+cd ..
 vim bitbake_build/conf/bblayers.conf
 ```
 
