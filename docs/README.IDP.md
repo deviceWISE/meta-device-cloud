@@ -1,14 +1,6 @@
 Description
 ===========
-WRLinux IDP has an old version of python that is insecure and is not
-suitable for device-cloud.  Python must be up versioned to 2.7.9.  The
-configure script for WRL IDP checks out layers/oe-core from the IDP
-release.  This must be changed and while making that change, add the
-device cloud dependencies.
-
-Note: at the time of this writing, the meta-device-cloud and the
-oe-core patched repositories are not public.  The following procedure
-will work only for those with WindRiver network access.
+WRLinux IDP must be configured to use python 2.7.9+.
 
 RCPL Supported
 --------------
