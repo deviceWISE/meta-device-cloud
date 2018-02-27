@@ -66,7 +66,7 @@ do_install_append() {
 	install -d ${D}/${VAR_DIR}
 	install -d ${D}/${BIN_DIR}
 	install -d ${D}${systemd_unitdir}/system/
-	install -d ${D}/${sysconfdir}/sudoers.d
+	install -d -m 0750 ${D}/${sysconfdir}/sudoers.d
         install -d ${D}${sysconfdir}/init.d
 
 	# sudoers file
