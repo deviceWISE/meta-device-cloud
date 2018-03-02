@@ -11,3 +11,4 @@ require device-cloud-user.inc
 # all details are in device-cloud-common.inc
 require device-cloud-common.inc
 
+RDEPENDS_${PN} += "python-subprocess"
