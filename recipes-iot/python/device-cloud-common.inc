@@ -37,7 +37,6 @@ RDEPENDS_${PN} += "\
     ${PYTHON_PN}-json \
     ${PYTHON_PN}-logging \
     ${PYTHON_PN}-pysocks \
-    ${PYTHON_PN}-subprocess \
     ${PYTHON_PN}-threading \
     ${PYTHON_PN}-unittest \
     ${PYTHON_PN}-websocket-client \
