@@ -122,6 +122,7 @@ do_install_append() {
 	install -m 755 ${B}/generate_config.py ${D}/${BIN_DIR}
 	install -m 755 ${B}/validate_app.py ${D}/${SHARE_DIR}
 	install -m 755 ${B}/validate_script.py ${D}/${SHARE_DIR}
+	install -m 755 ${B}/offline_ota_handler.py ${D}/${SHARE_DIR}
 
 	# install the /etc/ files
 	install -m 755 ${B}/iot.cfg ${D}/${ETC_DIR}/iot.cfg
