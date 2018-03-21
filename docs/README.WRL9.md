@@ -43,9 +43,11 @@ Tested on build machine iotbuild4
 	sed -i "s/\(BB_NO_NETWORK ?= \).*/\1'0'/" conf/local.conf
 	bitbake-layers add-layer ../layers/meta-openembedded/meta-python
 	bitbake-layers add-layer ../layers/meta-openembedded/meta-networking
-	bitbake-layers add-layer ../../repos/meta-openembedded/meta-oe
+	bitbake-layers add-layer ../layers/meta-openembedded/meta-oe
 	bitbake-layers add-layer ../layers/meta-device-cloud
-# update local.conf (see below)
+# -------------------------------------------------
+# update local.conf before proceeding! (see below)
+# -------------------------------------------------
 	bitbake wrlinux-image-glibc-std
 ```
 
