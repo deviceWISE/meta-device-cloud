@@ -99,10 +99,19 @@ do_install_append() {
 		# post process the vars for paths
 		cat ${B}/share/iot-watchdog-test.sh.in | sed -e "s|%bindir%|${BIN_DIR}|" \
 			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog-test.sh"
+
+		cat ${B}/share/iot-watchdog.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog"
+
 		cat ${B}/share/iot-watchdog.conf.in | sed -e "s|%bindir%|${BIN_DIR}|" \
 			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog.conf"
 
+		cat ${B}/share/iot-watchdog.service.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			> "${B}/share/iot-watchdog.service"
+
+		install -m 0644 "${B}/share/iot-watchdog.service" ${D}${systemd_unitdir}/system/
 		install -m 0755 "${B}/share/iot-watchdog-test.sh" ${D}${BIN_DIR}
+		install -m 0755 "${B}/share/iot-watchdog" ${D}${BIN_DIR}
 		install -m 0755 "${B}/share/iot-watchdog.conf" ${D}${ETC_DIR}
 		install -m 0755 "${B}/share/snapshot_util.py" ${D}${BIN_DIR}
 	fi
