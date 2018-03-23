@@ -51,6 +51,7 @@ RDEPENDS_${PN} += "\
 
 PACKAGES =+ "${PN}-systemd"
 SYSTEMD_SERVICE_${PN}-systemd += "device-manager.service"
+SYSTEMD_SERVICE_${PN}-systemd += "${@bb.utils.contains('LINUX_KERNEL_TYPE', 'idp', 'iot-watchdog.service', '', d)}"
 SYSTEMD_PACKAGES = "${PN}-systemd"
 
 INITSCRIPT_NAME = "device-manager-sysv-init"
