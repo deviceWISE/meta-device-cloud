@@ -8,6 +8,7 @@
 WRA_TRIGGER_TIMER_FLAG="/mnt/var/lib/python-device-cloud/ota_timer_triggered"
 WRA_BOOTONCE_FLAG="/mnt/var/lib/python-device-cloud/ota_bootonce"
 WRA_ROLLBACK_FLAG="/mnt/var/lib/python-device-cloud/ota_rollback_enabled"
+WRA_ROLLBACK_COMPLETE_FLAG="/mnt/var/lib/python-device-cloud/ota_rollback_complete"
 LVM_ROLLBACK="NO"
 
 # cmdline
@@ -39,6 +40,8 @@ fi
 # WRA_ROLLBACK_FLAG is set by OTA installer or by watchdog timer when expired
 if [ -e ${WRA_TRIGGER_TIMER_FLAG} ] ; then
 	if [ -e ${WRA_ROLLBACK_FLAG} ] ; then
+		# remove the rollback comlete flag
+		rm -f ${WRA_ROLLBACK_COMPLETE_FLAG}
 		echo "${WRA_TRIGGER_TIMER_FLAG} and ${WRA_ROLLBACK_FLAG} exists, rollback now."
 		LVM_ROLLBACK="YES"
 	fi
@@ -112,3 +115,6 @@ mount -o $ROOTMODE ${ROOTDEV} /mnt
 
 # wait a bit for volume to be ready
 sleep 10
+
+# now touch the flag to say rollback is complete
+touch ${WRA_ROLLBACK_COMPLETE_FLAG}
