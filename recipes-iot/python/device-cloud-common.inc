@@ -136,6 +136,11 @@ do_install_append() {
 	# install the /etc/ files
 	install -m 755 ${B}/iot.cfg ${D}/${ETC_DIR}/iot.cfg
 
+    # Fix shebang for python3
+    for PYTHSCRIPT in `grep -rIl '^#!.*python' ${D}`; do
+        sed -i -e '1s|^#!.*|#!/usr/bin/env ${PYTHON_PN}|' $PYTHSCRIPT
+    done
+
 }
 FILES_${PN} += "${SHARE_DIR} ${VAR_DIR} ${ETC_DIR} ${BIN_DIR}"
 FILES_${PN} += "/etc/sudoers.d/device-cloud ${sysconfdir}/init.d"
