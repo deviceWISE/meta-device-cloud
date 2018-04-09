@@ -52,7 +52,7 @@ RDEPENDS_${PN} += "\
 
 PACKAGES =+ "${PN}-systemd"
 SYSTEMD_SERVICE_${PN}-systemd += "device-manager.service"
-SYSTEMD_SERVICE_${PN}-systemd += "${@bb.utils.contains('LINUX_KERNEL_TYPE', 'idp', 'iot-watchdog.service', '', d)}"
+SYSTEMD_SERVICE_${PN}-systemd += "${@bb.utils.contains('LINUX_KERNEL_TYPE', 'idp', 'device-cloud-watchdog.service', '', d)}"
 SYSTEMD_PACKAGES = "${PN}-systemd"
 
 INITSCRIPT_NAME = "device-manager-sysv-init"
@@ -99,22 +99,22 @@ do_install_append() {
 		echo "IDP detected, installing watchdog files"
 
 		# post process the vars for paths
-		cat ${B}/share/iot-watchdog-test.sh.in | sed -e "s|%bindir%|${BIN_DIR}|" \
-			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog-test.sh"
+		cat ${B}/share/device-cloud-watchdog-test.sh.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/device-cloud-watchdog-test.sh"
 
-		cat ${B}/share/iot-watchdog.in | sed -e "s|%bindir%|${BIN_DIR}|" \
-			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog"
+		cat ${B}/share/device-cloud-watchdog.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/device-cloud-watchdog"
 
-		cat ${B}/share/iot-watchdog.conf.in | sed -e "s|%bindir%|${BIN_DIR}|" \
-			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/iot-watchdog.conf"
+		cat ${B}/share/device-cloud-watchdog.conf.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			-e "s|%vardir%|${VAR_DIR}|" -e "s|%etcdir%|${ETC_DIR}|" > "${B}/share/device-cloud-watchdog.conf"
 
-		cat ${B}/share/iot-watchdog.service.in | sed -e "s|%bindir%|${BIN_DIR}|" \
-			> "${B}/share/iot-watchdog.service"
+		cat ${B}/share/device-cloud-watchdog.service.in | sed -e "s|%bindir%|${BIN_DIR}|" \
+			> "${B}/share/device-cloud-watchdog.service"
 
-		install -m 0644 "${B}/share/iot-watchdog.service" ${D}${systemd_unitdir}/system/
-		install -m 0755 "${B}/share/iot-watchdog-test.sh" ${D}${BIN_DIR}
-		install -m 0755 "${B}/share/iot-watchdog" ${D}${BIN_DIR}
-		install -m 0755 "${B}/share/iot-watchdog.conf" ${D}${ETC_DIR}
+		install -m 0644 "${B}/share/device-cloud-watchdog.service" ${D}${systemd_unitdir}/system/
+		install -m 0755 "${B}/share/device-cloud-watchdog-test.sh" ${D}${BIN_DIR}
+		install -m 0755 "${B}/share/device-cloud-watchdog" ${D}${BIN_DIR}
+		install -m 0755 "${B}/share/device-cloud-watchdog.conf" ${D}${ETC_DIR}
 		install -m 0755 "${B}/share/snapshot_util.py" ${D}${BIN_DIR}
 	fi
 
