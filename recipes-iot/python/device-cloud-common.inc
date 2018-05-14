@@ -143,13 +143,8 @@ FILES_${PN} += "${SHARE_DIR} ${VAR_DIR} ${ETC_DIR} ${BIN_DIR}"
 FILES_${PN} += "/etc/sudoers.d/device-cloud ${sysconfdir}/init.d"
 FILES_${PN}-systemd += "${systemd_unitdir}"
 
-
-pkg_postinst_${PN}() {
-#!/bin/sh -e
-if [ x"$D" = "x" ]; then
-    chown -R ${DC_USER}:${DC_GROUP} ${VAR_DIR}
-    chown -R ${DC_USER}:${DC_GROUP} ${ETC_DIR}
-else
-    exit 1
-fi
+pkg_postinst_ontarget_${PN}() {
+     set -e
+     chown -R ${DC_USER}:${DC_GROUP} ${VAR_DIR}
+     chown -R ${DC_USER}:${DC_GROUP} ${ETC_DIR}
 }
