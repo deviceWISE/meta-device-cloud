@@ -11,9 +11,6 @@ LIC_FILES_CHKSUM = "file://COPYING.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 # pull in the SRCREV from the release
 include release.inc
 
-# for now, prepopulate this in the downloads directory
-SRC_URI = "git://github.com/Wind-River/device-cloud-python.git"
-
 S = "${WORKDIR}/git"
 RDEPENDS_${PN} += "bash sudo inetutils-telnetd python-pip"
 RDEPENDS_${PN}-systemd += "bash"
