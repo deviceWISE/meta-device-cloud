@@ -22,12 +22,12 @@ pip install --target=/usr/lib64/python2.7/site-packages package_name
 
 Build it
 -----------
-$ /path/to/setup.sh --machines=intel-x86-64 --dl-layers
-    --templates=feature/python-device-cloud --layers=meta-device-cloud
-$ source ./environment-setup-x86_64-wrlinuxsdk-linux
-$ source ./oe-init-build-env build
-$ bitbake wrlinux-image-glibc-std
-
+```sh
+ /path/to/setup.sh --machines=intel-x86-64 --dl-layers --templates=feature/python-device-cloud --layers=meta-device-cloud
+source ./environment-setup-x86_64-wrlinuxsdk-linux
+source ./oe-init-build-env build
+bitbake wrlinux-image-glibc-std
+```
 Flashing Image To USB
 ---------------------
   * Images are stored in: tmp/deploy/images/intel-x86-64
