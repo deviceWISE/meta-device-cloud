@@ -28,6 +28,7 @@ source ./environment-setup-x86_64-wrlinuxsdk-linux
 source ./oe-init-build-env build
 bitbake wrlinux-image-glibc-std
 ```
+
 Flashing Image To USB
 ---------------------
   * Images are stored in: tmp/deploy/images/intel-x86-64
